@@ -7,12 +7,12 @@
 
 使用 npm：
 ```bash
-npm install react-dep-analyzer
+npm install -D react-dep-analyzer
 ```
 
 使用 yarn：
 ```bash
-yarn add react-dep-analyzer
+yarn add -D react-dep-analyzer
 ```
 
 ## 使用方式
@@ -287,4 +287,181 @@ flowchart TD
 ## 授權條款
 
 MIT
+
+## 範例專案
+
+這是一個使用 Vite + TypeScript + React 的示例專案，展示如何使用此工具：
+
+### 專案結構
+```
+react-demo/
+├── src/
+│   ├── components/
+│   │   ├── Button/
+│   │   │   └── index.tsx
+│   │   └── Card/
+│   │       └── index.tsx
+│   ├── elements/
+│   │   └── Icon/
+│   │       └── index.tsx
+│   ├── pages/
+│   │   ├── home.tsx
+│   │   └── about.tsx
+│   ├── styles/
+│   │   └── index.css
+│   └── main.tsx
+├── scripts/
+│   └── analyze.ts
+├── package.json
+├── vite.config.ts
+└── tsconfig.json
+```
+
+### 元件範例
+
+#### Button 元件 (src/components/Button/index.tsx)
+```tsx
+import React from 'react';
+import { Icon } from '@/elements/Icon';
+
+interface ButtonProps {
+  children: React.ReactNode;
+  onClick?: () => void;
+  icon?: string;
+}
+
+export const Button: React.FC<ButtonProps> = ({ 
+  children, 
+  onClick,
+  icon 
+}) => {
+  return (
+    <button 
+      className="button" 
+      onClick={onClick}
+    >
+      {icon && <Icon name={icon} />}
+      {children}
+    </button>
+  );
+};
+```
+
+#### Card 元件 (src/components/Card/index.tsx)
+```tsx
+import React from 'react';
+import { Button } from '@/components/Button';
+
+interface CardProps {
+  title: string;
+  content: string;
+  onAction?: () => void;
+}
+
+export const Card: React.FC<CardProps> = ({ 
+  title, 
+  content,
+  onAction 
+}) => {
+  return (
+    <div className="card">
+      <h3>{title}</h3>
+      <p>{content}</p>
+      <Button onClick={onAction} icon="arrow-right">
+        了解更多
+      </Button>
+    </div>
+  );
+};
+```
+
+### 分析腳本設定
+
+#### 1. 安裝依賴
+```bash
+npm install -D react-dep-analyzer
+# 或
+yarn add -D react-dep-analyzer
+```
+
+#### 2. 添加分析腳本 (scripts/analyze.mjs)
+```javascript
+import { createAnalyzer } from 'react-dep-analyzer';
+
+const analyzer = createAnalyzer({
+  name: 'React Demo',
+  componentPaths: [
+    { 
+      path: 'src/components',
+      importPrefix: '@/components'
+    },
+    { 
+      path: 'src/elements',
+      importPrefix: '@/elements'
+    }
+  ]
+});
+
+analyzer.analyze();
+analyzer.generateMarkDown();
+analyzer.generateJson();
+```
+
+#### 3. 配置 package.json 腳本
+```json
+{
+  "type": "module",
+  "scripts": {
+    "analyze": "node scripts/analyze.mjs"
+  }
+}
+```
+
+### 分析結果
+
+執行 `npm run analyze` 後，會生成以下文檔：
+
+#### 元件索引 (tools/componentUsageAnalyzer/index.md)
+```markdown
+# React Demo Dependencies and Usage
+
+## Components
+
+- [Button](/src/components/Button/Button.md)
+  - Dependencies: 1
+  - Used in Pages: 2
+- [Card](/src/components/Card/Card.md)
+  - Dependencies: 1
+  - Used in Pages: 1
+```
+
+#### Button 元件文檔 (src/components/Button/Button.md)
+```markdown
+# Button
+> File Path: `components/Button/index.tsx`
+
+## Dependency Tree
+
+\```mermaid
+flowchart TD
+    Button["Button"]
+    Icon["Icon"]
+    page_home["home"]
+    page_about["about"]
+    Button --> Icon
+    Button --> page_home
+    Button --> page_about
+\```
+
+## Elements Dependencies
+> - **@/elements/Icon**
+>   - File: `elements/Icon/index.tsx`
+>   - Imports: `Icon`
+
+## Used in Pages
+> - `pages/home.tsx`
+> - `pages/about.tsx`
+```
+
+完整範例程式碼可以在 [examples/react-demo](examples/react-demo) 目錄中找到。
 
