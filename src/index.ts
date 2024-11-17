@@ -315,100 +315,137 @@ export class ComponentUsageAnalyzer {
     return output;
   }
 
-  generateMarkDown(outputPath?: string): void {
-    console.log('開始生成 Markdown 報告...');
-    // 設定預設輸出路徑
-    const defaultPath = path.join(
-      this.outputDir,
-      `${this.name.toLowerCase()}-dependencies.md`
-    );
-    const finalPath = outputPath || defaultPath;
+  private generateComponentMarkdown(
+    componentName: string, 
+    data: ComponentUsage,
+    outputDir: string
+  ): string {
+    // 生成元件專屬的 Markdown 檔案路徑
+    const componentFileName = `${componentName.toLowerCase()}.md`;
+    const componentFilePath = path.join(outputDir, componentFileName);
     
-    // 生成報告標題
-    const header = `# ${this.name} Dependencies and Usage\n\n`;
-    let output = header;
+    // 生成元件文檔內容
+    let output = `# ${componentName}\n`;
+    output += `> File Path: \`${data.file}\`\n\n`;
 
-    // 遍歷所有元件
-    Object.entries(this.targetUsage).forEach(([componentName, data]) => {
-      // 添加元件標題和檔案路徑
-      output += `## ${componentName}\n`;
-      output += `> File Path: \`${data.file}\`\n\n`;
+    // 添加元件依賴關係圖
+    output += '## Dependency Tree\n\n';
+    output += this.generateMermaidFlowchart(new Set(), new Set(), { name: componentName, data });
 
-      // 添加元件依賴關係圖
-      output += '### Dependency Tree\n\n';
-      output += this.generateMermaidFlowchart(new Set(), new Set(), { name: componentName, data });
-
-      if (data.dependencies.length > 0) {
-        // 根據 componentPaths 配置來分組依賴
-        const dependencyGroups = this.componentPaths.reduce((groups, pathConfig) => {
-          // 使用路徑最後一段作為分組名稱（例如：components, elements）
-          const groupName = pathConfig.path.split('/').pop() || 'other';
-          // 過濾出屬於該分組的依賴
-          groups[groupName] = data.dependencies.filter(d => 
-            d.path.startsWith(pathConfig.importPrefix)
-          );
-          return groups;
-        }, {} as Record<string, DependencyInfo[]>);
-
-        // 找出未匹配任何已配置路徑的其他依賴
-        const otherDeps = data.dependencies.filter(d => 
-          !this.componentPaths.some(config => 
-            d.path.startsWith(config.importPrefix)
-          )
+    if (data.dependencies.length > 0) {
+      // 根據 componentPaths 配置來分組依賴
+      const dependencyGroups = this.componentPaths.reduce((groups, pathConfig) => {
+        // 使用路徑最後一段作為分組名稱（例如：components, elements）
+        const groupName = pathConfig.path.split('/').pop() || 'other';
+        // 過濾出屬於該分組的依賴
+        groups[groupName] = data.dependencies.filter(d => 
+          d.path.startsWith(pathConfig.importPrefix)
         );
+        return groups;
+      }, {} as Record<string, DependencyInfo[]>);
 
-        // 輸出每個分組的依賴
-        Object.entries(dependencyGroups).forEach(([groupName, deps]) => {
-          if (deps.length > 0) {
-            // 將分組名稱首字母大寫
-            output += `### ${groupName.charAt(0).toUpperCase() + groupName.slice(1)} Dependencies\n`;
-            deps.forEach((dep) => {
-              // 合併所有引用的名稱
-              const importsList = dep.imports.join(', ');
-              // 轉換為相對於專案根目錄的路徑
-              const relativePath = path.relative(this.projectRoot, dep.file);
-              // 使用引用格式輸出依賴資訊
-              output += `> - **${dep.path}**\n`;
-              output += `>   - File: \`${relativePath}\`\n`;
-              output += `>   - Imports: \`${importsList}\`\n`;
-            });
-            output += '\n';
-          }
-        });
+      // 找出未匹配任何已配置路徑的其他依賴
+      const otherDeps = data.dependencies.filter(d => 
+        !this.componentPaths.some(config => 
+          d.path.startsWith(config.importPrefix)
+        )
+      );
 
-        // 輸出其他未分組的依賴
-        if (otherDeps.length > 0) {
-          output += '### Other Dependencies\n';
-          otherDeps.forEach((dep) => {
+      // 輸出每個分組的依賴
+      Object.entries(dependencyGroups).forEach(([groupName, deps]) => {
+        if (deps.length > 0) {
+          // 將分組名稱首字母大寫
+          output += `## ${groupName.charAt(0).toUpperCase() + groupName.slice(1)} Dependencies\n`;
+          deps.forEach((dep) => {
+            // 合併所有引用的名稱
             const importsList = dep.imports.join(', ');
+            // 轉換為相對於專案根目錄的路徑
             const relativePath = path.relative(this.projectRoot, dep.file);
+            // 使用引用格式輸出依賴資訊
             output += `> - **${dep.path}**\n`;
             output += `>   - File: \`${relativePath}\`\n`;
             output += `>   - Imports: \`${importsList}\`\n`;
           });
           output += '\n';
         }
-      }
+      });
 
-      // 輸出使用此元件的頁面列表
-      if (data.usedInPages.length > 0) {
-        output += '### Used in Pages\n';
-        data.usedInPages.forEach((page: string) => {
-          output += `> - \`${page}\`\n`;
+      // 輸出其他未分組的依賴
+      if (otherDeps.length > 0) {
+        output += '## Other Dependencies\n';
+        otherDeps.forEach((dep) => {
+          const importsList = dep.imports.join(', ');
+          const relativePath = path.relative(this.projectRoot, dep.file);
+          output += `> - **${dep.path}**\n`;
+          output += `>   - File: \`${relativePath}\`\n`;
+          output += `>   - Imports: \`${importsList}\`\n`;
         });
         output += '\n';
       }
+    }
+
+    // 輸出使用此元件的頁面列表
+    if (data.usedInPages.length > 0) {
+      output += '## Used in Pages\n';
+      data.usedInPages.forEach((page: string) => {
+        output += `> - \`${page}\`\n`;
+      });
+      output += '\n';
+    }
+
+    // 寫入元件文檔檔案
+    fs.writeFileSync(componentFilePath, output, 'utf8');
+    return componentFilePath;
+  }
+
+  generateMarkDown(outputPath?: string): void {
+    console.log('開始生成 Markdown 報告...');
+    
+    // 設定預設輸出目錄
+    const defaultDir = path.join(
+      this.outputDir,
+      `${this.name.toLowerCase()}-docs`
+    );
+    const outputDir = outputPath || defaultDir;
+    
+    // 確保輸出目錄存在
+    fs.mkdirSync(outputDir, { recursive: true });
+
+    // 生成索引文件內容
+    let indexContent = `# ${this.name} Dependencies and Usage\n\n`;
+    indexContent += '## Components\n\n';
+
+    // 遍歷所有元件並生成獨立文檔
+    const componentFiles = Object.entries(this.targetUsage).map(([componentName, data]) => {
+      // 生成元件文檔並獲取相對路徑
+      const componentFilePath = this.generateComponentMarkdown(componentName, data, outputDir);
+      const relativeFilePath = path.relative(outputDir, componentFilePath);
       
-      // 添加分隔線
-      output += '---\n\n';
+      // 返回元件名稱和檔案路徑，用於生成索引
+      return {
+        name: componentName,
+        path: relativeFilePath,
+        dependencies: data.dependencies.length,
+        usedInPages: data.usedInPages.length
+      };
     });
 
-    // 確保輸出目錄存在
-    fs.mkdirSync(path.dirname(finalPath), { recursive: true });
-    // 寫入檔案
-    fs.writeFileSync(finalPath, output, 'utf8');
-    console.log(`Markdown 報告已生成: ${finalPath}`);
-    console.log(`分析了 ${Object.keys(this.targetUsage).length} 個元件`);
+    // 在索引文件中添加元件列表
+    componentFiles
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .forEach(({ name, path, dependencies, usedInPages }) => {
+        indexContent += `- [${name}](./${path})\n`;
+        indexContent += `  - Dependencies: ${dependencies}\n`;
+        indexContent += `  - Used in Pages: ${usedInPages}\n`;
+      });
+
+    // 寫入索引文件
+    const indexPath = path.join(outputDir, 'index.md');
+    fs.writeFileSync(indexPath, indexContent, 'utf8');
+
+    console.log(`Markdown 文檔已生成於: ${outputDir}`);
+    console.log(`分析了 ${componentFiles.length} 個元件`);
+    console.log(`索引文件: ${indexPath}`);
   }
 
   generateDependencyTree(outputPath?: string): void {
