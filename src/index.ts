@@ -29,6 +29,17 @@ interface ComponentUsage {
   usedInPages: string[];
 }
 
+// 新增介面定義
+interface GroupedDependency {
+  path: string;
+  file: string;
+  imports: string[];
+}
+
+interface DependencyGroups {
+  [key: string]: GroupedDependency[];
+}
+
 export class ComponentUsageAnalyzer {
   private name: string;
   private pagesDir: string;
@@ -394,6 +405,64 @@ export class ComponentUsageAnalyzer {
     fs.writeFileSync(finalPath, output, 'utf8');
     console.log(`依賴關係樹已生成: ${finalPath}`);
     console.log(`包含 ${Object.keys(this.targetUsage).length} 個元件節點`);
+  }
+
+  generateJson(outputPath?: string): void {
+    console.log('開始生成 JSON 報告...');
+    const defaultPath = path.join(
+      this.outputDir,
+      `${this.name.toLowerCase()}-dependencies.json`
+    );
+    const finalPath = outputPath || defaultPath;
+
+    // 建立輸出物件
+    const output = {
+      name: this.name,
+      analyzedAt: new Date().toISOString(),
+      components: Object.entries(this.targetUsage).map(([componentName, data]) => {
+        // 根據 componentPaths 配置來分組依賴
+        const dependencyGroups = this.componentPaths.reduce((groups, pathConfig) => {
+          const groupName = pathConfig.path.split('/').pop() || 'other';
+          groups[groupName] = data.dependencies
+            .filter(d => d.path.startsWith(pathConfig.importPrefix))
+            .map(d => ({
+              path: d.path,
+              file: path.relative(this.projectRoot, d.file),
+              imports: d.imports
+            }));
+          return groups;
+        }, {} as DependencyGroups);  // 使用新定義的介面
+
+        // 找出其他未分組的依賴
+        const otherDeps = data.dependencies
+          .filter(d => !this.componentPaths.some(config => 
+            d.path.startsWith(config.importPrefix)
+          ))
+          .map(d => ({
+            path: d.path,
+            file: path.relative(this.projectRoot, d.file),
+            imports: d.imports
+          }));
+
+        if (otherDeps.length > 0) {
+          dependencyGroups.other = otherDeps;
+        }
+
+        return {
+          name: componentName,
+          file: data.file,
+          dependencies: dependencyGroups,
+          usedInPages: data.usedInPages
+        };
+      })
+    };
+
+    // 確保輸出目錄存在
+    fs.mkdirSync(path.dirname(finalPath), { recursive: true });
+    // 寫入 JSON 檔案
+    fs.writeFileSync(finalPath, JSON.stringify(output, null, 2), 'utf8');
+    console.log(`JSON 報告已生成: ${finalPath}`);
+    console.log(`分析了 ${Object.keys(this.targetUsage).length} 個元件`);
   }
 }
 
