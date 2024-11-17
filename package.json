@@ -1,6 +1,6 @@
 {
   "name": "react-dep-analyzer",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "分析 React 元件依賴關係和使用情況的工具",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
