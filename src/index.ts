@@ -230,54 +230,62 @@ export class ComponentUsageAnalyzer {
     let output = header;
 
     Object.entries(this.targetUsage).forEach(([componentName, data]) => {
-      output += `## ${componentName} (${data.file})\n\n`;
+      output += `## ${componentName}\n`;
+      output += `> File Path: \`${data.file}\`\n\n`;
 
       if (data.dependencies.length > 0) {
-        // 根據路徑模式分組依賴
-        const componentDeps = data.dependencies.filter(d => d.path.includes('/components/'));
-        const elementDeps = data.dependencies.filter(d => d.path.includes('/elements/'));
+        // 根據 componentPaths 配置來分組依賴
+        const dependencyGroups = this.componentPaths.reduce((groups, pathConfig) => {
+          const groupName = pathConfig.path.split('/').pop() || 'other';
+          groups[groupName] = data.dependencies.filter(d => 
+            d.path.startsWith(pathConfig.importPrefix)
+          );
+          return groups;
+        }, {} as Record<string, DependencyInfo[]>);
+
+        // 其他未匹配的依賴
         const otherDeps = data.dependencies.filter(d => 
-          !d.path.includes('/components/') && !d.path.includes('/elements/')
+          !this.componentPaths.some(config => 
+            d.path.startsWith(config.importPrefix)
+          )
         );
 
-        if (componentDeps.length > 0) {
-          output += '### Component Dependencies:\n';
-          componentDeps.forEach((dep) => {
-            const importsList = dep.imports.join(', ');
-            output += `- ${dep.path} (${dep.file})\n`;
-            output += `  Imports: ${importsList}\n`;
-          });
-          output += '\n';
-        }
+        // 輸出每個分組的依賴
+        Object.entries(dependencyGroups).forEach(([groupName, deps]) => {
+          if (deps.length > 0) {
+            output += `### ${groupName.charAt(0).toUpperCase() + groupName.slice(1)} Dependencies\n`;
+            deps.forEach((dep) => {
+              const importsList = dep.imports.join(', ');
+              output += `> - **${dep.path}**\n`;
+              output += `>   - File: \`${dep.file}\`\n`;
+              output += `>   - Imports: \`${importsList}\`\n`;
+            });
+            output += '\n';
+          }
+        });
 
-        if (elementDeps.length > 0) {
-          output += '### Element Dependencies:\n';
-          elementDeps.forEach((dep) => {
-            const importsList = dep.imports.join(', ');
-            output += `- ${dep.path} (${dep.file})\n`;
-            output += `  Imports: ${importsList}\n`;
-          });
-          output += '\n';
-        }
-
+        // 輸出其他依賴
         if (otherDeps.length > 0) {
-          output += '### Other Dependencies:\n';
+          output += '### Other Dependencies\n';
           otherDeps.forEach((dep) => {
             const importsList = dep.imports.join(', ');
-            output += `- ${dep.path} (${dep.file})\n`;
-            output += `  Imports: ${importsList}\n`;
+            output += `> - **${dep.path}**\n`;
+            output += `>   - File: \`${dep.file}\`\n`;
+            output += `>   - Imports: \`${importsList}\`\n`;
           });
           output += '\n';
         }
       }
 
       if (data.usedInPages.length > 0) {
-        output += '  Used in pages:\n';
+        output += '### Used in Pages\n';
         data.usedInPages.forEach((page: string) => {
-          output += `    - ${page}\n`;
+          output += `> - \`${page}\`\n`;
         });
+        output += '\n';
       }
-      output += '\n';
+      
+      output += '---\n\n';
     });
 
     fs.mkdirSync(path.dirname(finalPath), { recursive: true });
