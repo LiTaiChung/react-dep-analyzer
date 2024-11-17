@@ -317,14 +317,24 @@ export class ComponentUsageAnalyzer {
 
   private generateComponentMarkdown(
     componentName: string, 
-    data: ComponentUsage,
-    outputDir: string
+    data: ComponentUsage
   ): string {
-    // 從元件檔案路徑獲取目錄結構
-    const componentDir = path.dirname(data.file);
-    
-    // 在輸出目錄中創建相同的目錄結構
-    const targetDir = path.join(outputDir, componentDir);
+    // 找到對應的 componentPath 配置
+    const componentPathConfig = this.componentPaths.find(config => 
+      data.file.startsWith(path.relative(this.projectRoot, config.path))
+    );
+
+    if (!componentPathConfig) {
+      console.warn(`警告: 找不到元件 ${componentName} 的路徑配置`);
+      return '';
+    }
+
+    // 使用配置中的路徑
+    const targetDir = path.join(
+      this.projectRoot,
+      componentPathConfig.path,
+      path.dirname(path.relative(componentPathConfig.path, data.file))
+    );
     
     // 使用原始元件名稱（保持大小寫）作為檔案名
     const componentFileName = `${componentName}.md`;
@@ -427,7 +437,7 @@ export class ComponentUsageAnalyzer {
     // 遍歷所有元件並生成獨立文檔
     const componentFiles = Object.entries(this.targetUsage).map(([componentName, data]) => {
       // 生成元件文檔並獲取相對路徑
-      const componentFilePath = this.generateComponentMarkdown(componentName, data, outputDir);
+      const componentFilePath = this.generateComponentMarkdown(componentName, data);
       const relativeFilePath = path.relative(outputDir, componentFilePath);
       
       // 返回元件名稱和檔案路徑，用於生成索引
