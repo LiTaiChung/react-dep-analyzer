@@ -42,17 +42,6 @@ const analyzer = createAnalyzer({
   name: 'Component',
   targetPath: 'src/components',
   pagesPath: 'src/pages',
-  componentPaths: [
-    { 
-      path: 'src/components',
-      importPrefix: '@/components'
-    },
-    { 
-      path: 'src/elements',
-      importPrefix: '@/elements'
-    }
-  ],
-  outputDir: 'tools/componentUsageAnalyzer'
 });
 
 // 執行分析
@@ -76,66 +65,214 @@ npm run analyze
 yarn analyze
 ```
 
-## 輸出結果
+### 4. 配置 package.json
 
-分析器會生成三種格式的報告：
+如果你的專案使用了 `"type": "module"`，可以直接執行上述指令。如果沒有，需要在 `package.json` 中加入：
 
-### 1. Markdown 文檔
-元件文檔會直接生成在對應元件的目錄中，保持與原始程式碼相同的結構：
-
-```
-src/
-├── components/
-│   ├── Button/
-│   │   ├── index.tsx          # 原始元件
-│   │   └── Button.md         # 元件文檔
-│   └── Card/
-│       ├── index.tsx
-│       └── Card.md
-└── elements/
-    └── Icon/
-        ├── index.tsx
-        └── Icon.md
+```json
+{
+  "type": "module"
+}
 ```
 
-索引文件和其他報告會生成在配置的 `outputDir` 中：
-```
-tools/componentUsageAnalyzer/
-├── index.md                    # 元件索引
-├── component-tree.md          # 依賴樹圖
-└── component-dependencies.json # JSON 格式報告
+或者在執行指令時加入 `--experimental-modules` 標記：
+
+```json
+{
+  "scripts": {
+    "analyze": "node --experimental-modules scripts/analyze.mjs"
+  }
+}
 ```
 
-#### 元件文檔範例 (Button.md)
+## 基本使用
+
+```typescript
+import { createAnalyzer } from 'react-dep-analyzer';
+
+// 使用預設配置建立分析器
+const analyzer = createAnalyzer();
+
+// 執行分析
+analyzer.run();
+
+// 生成 Markdown 文檔（包含索引和個別元件文檔）
+analyzer.generateMarkDown();
+
+// 生成完整依賴樹圖
+analyzer.generateDependencyTree();
+
+// 生成 JSON 格式報告
+analyzer.generateJson();
+```
+
+## 配置選項
+
+你可以透過傳入配置物件來自定義分析器的行為：
+
+```typescript
+interface ComponentPathConfig {
+  path: string;          // 元件目錄路徑
+  importPrefix: string;  // import 語句的前綴
+}
+
+const analyzer = createAnalyzer({
+  name: 'Component',              // 分析報告的標題名稱
+  targetPath: 'src/components',   // 要分析的元件目錄
+  pagesPath: 'src/pages',        // 頁面檔案目錄
+  fileExtensions: ['.tsx'],      // 要分析的檔案副檔名
+  componentPaths: [              // 元件搜尋路徑配置
+    { 
+      path: 'src/components',    
+      importPrefix: '@/components'
+    },
+    { 
+      path: 'src/elements',
+      importPrefix: '@/elements'
+    }
+  ],
+  outputDir: 'tools/componentUsageAnalyzer', // 輸出目錄
+});
+```
+
+### 預設配置
+
+工具內建以下預設配置：
+
+```typescript
+const defaultConfig = {
+  name: 'Component',
+  targetPath: 'src/components',
+  pagesPath: 'src/pages',
+  fileExtensions: ['.tsx'],
+  componentPaths: [
+    { 
+      path: 'src/components',
+      importPrefix: '@/components'
+    },
+    { 
+      path: 'src/elements',
+      importPrefix: '@/elements'
+    }
+  ],
+  outputDir: 'tools/componentUsageAnalyzer',
+};
+```
+
+## 輸出範例
+
+### Markdown 文檔
+
+工具會在專案目錄中生成以下檔案結構：
+
+```
+專案根目錄/
+├── src/
+│   ├── components/
+│   │   ├── Button/
+│   │   │   ├── index.tsx          # 原始元件
+│   │   │   └── Button.md         # 元件文檔
+│   │   └── Card/
+│   │       ├── index.tsx
+│   │       └── Card.md
+│   └── elements/
+│       └── Icon/
+│           ├── index.tsx
+│           └── Icon.md
+└── tools/
+    └── componentUsageAnalyzer/    # 其他報告輸出目錄
+        ├── index.md               # 元件索引
+        ├── component-tree.md      # 依賴樹圖
+        └── component-dependencies.json  # JSON 格式報告
+```
+
+#### 索引文件 (tools/componentUsageAnalyzer/index.md)
+```markdown
+# Component Dependencies and Usage
+
+## Components
+
+- [Button](./src/components/Button/Button.md)
+  - Dependencies: 1
+  - Used in Pages: 2
+- [Card](./src/components/Card/Card.md)
+  - Dependencies: 1
+  - Used in Pages: 1
+```
+
+#### 元件文檔 (例如：src/components/Button/Button.md)
 ```markdown
 # Button
-> File Path: `src/components/Button/index.tsx`
+> File Path: `components/Button/index.tsx`
 
 ## Dependency Tree
-```mermaid
+
+\```mermaid
 flowchart TD
     Button["Button"]
     Icon["Icon"]
+    page_home["home"]
+    page_about["about"]
     Button --> Icon
-    Button --> page_home["home"]
-    Button --> page_about["about"]
-```
+    Button --> page_home
+    Button --> page_about
+\```
 
 ## Elements Dependencies
 > - **@/elements/Icon**
->   - File: `src/elements/Icon/index.tsx`
+>   - File: `elements/Icon/index.tsx`
 >   - Imports: `Icon`
 
 ## Used in Pages
-> - `src/pages/home.tsx`
-> - `src/pages/about.tsx`
+> - `pages/home.tsx`
+> - `pages/about.tsx`
 ```
 
-### 2. 依賴樹圖
-生成包含所有元件關係的完整依賴樹圖。
+### 依賴樹圖 (tools/componentUsageAnalyzer/component-tree.md)
 
-### 3. JSON 報告
-提供結構化的依賴關係資料，方便程式處理。
+```markdown
+# Component Dependency Tree
+
+\```mermaid
+flowchart TD
+    Button["Button"]
+    Card["Card"]
+    Icon["Icon"]
+    Button --> Icon
+    Card --> Button
+    Button --> page_home["home"]
+    Button --> page_about["about"]
+    Card --> page_products["products"]
+\```
+```
+
+### JSON 報告 (tools/componentUsageAnalyzer/component-dependencies.json)
+
+```json
+{
+  "name": "Component",
+  "analyzedAt": "2024-01-01T00:00:00.000Z",
+  "components": [
+    {
+      "name": "Button",
+      "file": "components/Button.tsx",
+      "dependencies": {
+        "elements": [
+          {
+            "path": "@/elements/Icon",
+            "file": "elements/Icon.tsx",
+            "imports": ["Icon"]
+          }
+        ]
+      },
+      "usedInPages": [
+        "pages/home.tsx",
+        "pages/about.tsx"
+      ]
+    }
+  ]
+}
+```
 
 ## 注意事項
 

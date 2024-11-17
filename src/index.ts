@@ -321,7 +321,7 @@ export class ComponentUsageAnalyzer {
   ): string {
     // 找到對應的 componentPath 配置
     const componentPathConfig = this.componentPaths.find(config => 
-      data.file.startsWith(path.relative(this.projectRoot, config.path))
+      data.file.includes(path.relative(this.projectRoot, config.path))
     );
 
     if (!componentPathConfig) {
@@ -329,12 +329,9 @@ export class ComponentUsageAnalyzer {
       return '';
     }
 
-    // 使用配置中的路徑
-    const targetDir = path.join(
-      this.projectRoot,
-      componentPathConfig.path,
-      path.dirname(path.relative(componentPathConfig.path, data.file))
-    );
+    // 從完整檔案路徑中取得相對路徑部分
+    const relativeFilePath = path.relative(this.projectRoot, data.file);
+    const targetDir = path.join(this.projectRoot, path.dirname(relativeFilePath));
     
     // 使用原始元件名稱（保持大小寫）作為檔案名
     const componentFileName = `${componentName}.md`;
