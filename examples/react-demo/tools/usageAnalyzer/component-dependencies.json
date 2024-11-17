@@ -1,0 +1,45 @@
+{
+  "name": "Component",
+  "analyzedAt": "2024-11-17T19:04:50.349Z",
+  "components": [
+    {
+      "name": "Card",
+      "file": "src/components/Card/index.tsx",
+      "dependencies": {
+        "components": [
+          {
+            "path": "@/components/Button",
+            "file": "src/components/Button.tsx",
+            "imports": [
+              "Button"
+            ]
+          }
+        ],
+        "elements": []
+      },
+      "usedInPages": [
+        "src/pages/home.tsx"
+      ]
+    },
+    {
+      "name": "Button",
+      "file": "src/components/Button/index.tsx",
+      "dependencies": {
+        "components": [],
+        "elements": [
+          {
+            "path": "@/elements/Icon",
+            "file": "src/elements/Icon.tsx",
+            "imports": [
+              "Icon"
+            ]
+          }
+        ]
+      },
+      "usedInPages": [
+        "src/pages/home.tsx",
+        "src/pages/about.tsx"
+      ]
+    }
+  ]
+}
