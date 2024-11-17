@@ -1,43 +1,143 @@
-# Usage Analyzer
+# 元件使用分析工具 (Component Usage Analyzer)
 
-一個用於分析 React 專案中元件使用情況的工具。
+這是一個用於分析 React/TypeScript 專案中元件依賴關係和使用情況的工具。它可以幫助你：
+
+- 追蹤元件之間的依賴關係
+- 查找元件在哪些頁面中被使用
+- 生成依賴關係的 Markdown 報告
+- 生成可視化的依賴樹圖（使用 Mermaid）
 
 ## 安裝
 
 ```bash
-npm install usage-analyzer
-# 或
-yarn add usage-analyzer
+npm install component-usage-analyzer
 ```
 
-## 使用方式
+## 基本使用
 
 ```typescript
-import { createAnalyzer } from 'usage-analyzer';
+// ESM
+import { createAnalyzer } from 'component-usage-analyzer';
 
-const analyzer = createAnalyzer({
-  name: 'Component',
-  targetPath: 'src/components',
-  pagesPath: 'src/pages',
-});
+// CommonJS
+const { createAnalyzer } = require('component-usage-analyzer');
 
+// 使用預設配置建立分析器
+const analyzer = createAnalyzer();
+
+// 執行分析
 analyzer.run();
+
+// 生成 Markdown 報告
 analyzer.generateMarkDown();
+
+// 生成依賴樹圖
 analyzer.generateDependencyTree();
 ```
 
 ## 配置選項
 
-| 選項 | 類型 | 預設值 | 說明 |
-|------|------|--------|------|
-| name | string | 'Component' | 報告標題名稱 |
-| targetPath | string | 'src/components' | 目標元件的路徑 |
-| pagesPath | string | 'src/pages' | 頁面檔案的路徑 |
-| fileExtensions | string[] | ['.tsx'] | 要掃描的檔案副檔名 |
-| componentPaths | string[] | ['src/components', 'src/elements'] | 額外的元件路徑 |
-| outputDir | string | 'tools/usageAnalyzer' | 報告輸出目錄 |
-| exportNamePattern | RegExp | /^[A-Z]/ | 有效匯出名稱的正規表達式 |
+你可以透過傳入配置物件來自定義分析器的行為：
 
-## License
+```typescript
+interface ComponentPathConfig {
+  path: string;          // 元件目錄路徑
+  importPrefix: string;  // import 語句的前綴
+}
+
+const analyzer = createAnalyzer({
+  name: 'Component',              // 分析報告的標題名稱
+  targetPath: 'src/components',   // 要分析的元件目錄
+  pagesPath: 'src/pages',        // 頁面檔案目錄
+  fileExtensions: ['.tsx'],      // 要分析的檔案副檔名
+  componentPaths: [              // 元件搜尋路徑配置
+    { 
+      path: 'src/components',    
+      importPrefix: '@/components'
+    },
+    { 
+      path: 'src/elements',
+      importPrefix: '@/elements'
+    }
+  ],
+  outputDir: 'tools/usageAnalyzer', // 輸出目錄
+  exportNamePattern: /^[A-Z]/,      // 元件名稱匹配模式（預設匹配大寫開頭）
+});
+```
+
+### 預設配置
+
+工具內建以下預設配置：
+
+```typescript
+const defaultConfig = {
+  name: 'Component',
+  targetPath: 'src/components',
+  pagesPath: 'src/pages',
+  fileExtensions: ['.tsx'],
+  componentPaths: [
+    { 
+      path: 'src/components',
+      importPrefix: '@/components'
+    },
+    { 
+      path: 'src/elements',
+      importPrefix: '@/elements'
+    }
+  ],
+  outputDir: 'tools/usageAnalyzer',
+  exportNamePattern: /^[A-Z]/,
+};
+```
+
+## 輸出範例
+
+### Markdown 報告 (dependencies.md)
+
+```markdown
+# Component Dependencies and Usage
+
+- Button (src/components/Button.tsx)
+  Dependencies:
+    - @/elements/Icon (src/elements/Icon.tsx)
+      Imports: Icon
+  Used in pages:
+    - src/pages/home.tsx
+    - src/pages/about.tsx
+
+- Card (src/components/Card.tsx)
+  Dependencies:
+    - @/components/Button (src/components/Button.tsx)
+      Imports: Button
+  Used in pages:
+    - src/pages/products.tsx
+```
+
+### 依賴樹圖 (tree.md)
+
+工具會生成一個使用 Mermaid 語法的依賴樹圖，可以直接在支援 Mermaid 的 Markdown 檢視器中顯示（如 GitHub）。
+
+```mermaid
+flowchart TD
+    Button["Button"]
+    Card["Card"]
+    Icon["Icon"]
+    Button --> Icon
+    Card --> Button
+    Button --> page_home["home"]
+    Button --> page_about["about"]
+    Card --> page_products["products"]
+```
+
+## 注意事項
+
+1. 工具預設只分析以大寫字母開頭的匯出（符合 React 元件命名規範）
+2. 支援分析命名匯出、預設匯出和批量匯出
+3. 目前支援 `.tsx` 檔案的分析，可透過配置擴展支援其他檔案類型
+4. 工具會自動尋找專案根目錄（包含 package.json 的目錄）
+5. 所有路徑都相對於專案根目錄進行解析
+6. 確保專案目錄結構符合配置中指定的路徑
+
+## 授權條款
 
 MIT

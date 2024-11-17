@@ -1,25 +1,39 @@
 {
-  "name": "usage-analyzer",
-  "version": "1.0.0",
+  "name": "component-usage-analyzer",
+  "version": "1.0.8",
   "description": "分析 React 元件使用情況的工具",
-  "main": "dist/index.js",
-  "module": "dist/index.mjs",
-  "types": "dist/index.d.ts",
-  "files": ["dist"],
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "type": "module",
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
     "test": "jest",
-    "lint": "eslint src",
-    "prepublishOnly": "npm run build"
+    "lint": "eslint src --ext .ts,.tsx",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run typecheck && npm run build"
   },
   "keywords": [
     "react",
     "component",
     "analysis",
     "dependency",
-    "usage"
+    "usage",
+    "typescript"
   ],
-  "author": "Your Name",
+  "author": "Ice Li",
   "license": "MIT",
   "dependencies": {
     "glob": "^10.0.0"
@@ -27,13 +41,16 @@
   "devDependencies": {
     "@types/jest": "^29.0.0",
     "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
     "eslint": "^8.0.0",
     "jest": "^29.0.0",
     "ts-jest": "^29.0.0",
     "tsup": "^8.0.0",
-    "typescript": "^5.0.0"
+    "typescript": "~5.3.3"
   },
   "peerDependencies": {
-    "react": ">=16.8.0"
+    "react": ">=16.8.0",
+    "typescript": ">=4.7.0"
   }
 }

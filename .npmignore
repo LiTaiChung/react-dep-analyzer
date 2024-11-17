@@ -1,0 +1,19 @@
+# Source
+src/
+tests/
+coverage/
+
+# Config files
+.github/
+.gitignore
+jest.config.js
+tsconfig.json
+*.test.ts
+*.test.js
+
+# IDE
+.idea/
+.vscode/
+
+# Logs
+*.log 
