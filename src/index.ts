@@ -229,6 +229,92 @@ export class ComponentUsageAnalyzer {
     console.log('元件使用情況分析完成');
   }
 
+  private generateMermaidFlowchart(
+    nodes: Set<string> = new Set<string>(),
+    edges: Set<string> = new Set<string>(),
+    initialComponent?: { name: string; data: ComponentUsage }
+  ): string {
+    let output = '```mermaid\nflowchart TD\n';
+    output += '    %% 樣式定義\n';
+    output += '    classDef component fill:#f9f,stroke:#333,stroke-width:2px,color:#000,font-weight:bold\n';
+    output += '    classDef element fill:#bbf,stroke:#333,stroke-width:2px,color:#000,font-weight:bold\n';
+    output += '    classDef page fill:#bfb,stroke:#333,stroke-width:2px,color:#000,font-weight:bold\n';
+    output += '    classDef other fill:#fff,stroke:#333,stroke-width:1px,color:#000\n\n';
+
+    const processComponent = (componentName: string, data: ComponentUsage) => {
+      const sourceId = componentName.replace(/[^a-zA-Z0-9]/g, '_');
+      
+      if (!nodes.has(sourceId)) {
+        nodes.add(sourceId);
+        output += `    ${sourceId}["${componentName}"]\n`;
+        output += `    class ${sourceId} component\n`;
+      }
+
+      // 處理依賴
+      data.dependencies.forEach((dep) => {
+        dep.imports.forEach((importName) => {
+          const cleanImportName = importName.split(' as ')[0].trim();
+          // 避免自我引用
+          if (cleanImportName !== 'type' && cleanImportName !== componentName) {
+            const targetId = cleanImportName.replace(/[^a-zA-Z0-9]/g, '_');
+            const edgeKey = `${sourceId}-${targetId}`;
+
+            if (!edges.has(edgeKey)) {
+              edges.add(edgeKey);
+              
+              if (!nodes.has(targetId)) {
+                nodes.add(targetId);
+                output += `    ${targetId}["${cleanImportName}"]\n`;
+                
+                if (dep.path.includes('/components/')) {
+                  output += `    class ${targetId} component\n`;
+                } else if (dep.path.includes('/elements/')) {
+                  output += `    class ${targetId} element\n`;
+                } else {
+                  output += `    class ${targetId} other\n`;
+                }
+              }
+              
+              output += `    ${sourceId} --> ${targetId}\n`;
+            }
+          }
+        });
+      });
+
+      // 處理頁面節點
+      data.usedInPages.forEach((page: string) => {
+        const pageName = page.replace(/^src\/pages\//, '').replace(/\.tsx$/, '');
+        const pageNodeId = `page_${pageName.replace(/[^a-zA-Z0-9]/g, '_')}`;
+        
+        const edgeKey = `${sourceId}-${pageNodeId}`;
+        if (!edges.has(edgeKey)) {
+          edges.add(edgeKey);
+          
+          if (!nodes.has(pageNodeId)) {
+            nodes.add(pageNodeId);
+            output += `    ${pageNodeId}["${pageName}"]\n`;
+          }
+          
+          output += `    ${sourceId} --> ${pageNodeId}\n`;
+          output += `    class ${pageNodeId} page\n`;
+        }
+      });
+    };
+
+    // 如果提供了初始元件，只處理該元件
+    if (initialComponent) {
+      processComponent(initialComponent.name, initialComponent.data);
+    } else {
+      // 否則處理所有元件
+      Object.entries(this.targetUsage).forEach(([componentName, data]) => {
+        processComponent(componentName, data);
+      });
+    }
+
+    output += '```\n';
+    return output;
+  }
+
   generateMarkDown(outputPath?: string): void {
     console.log('開始生成 Markdown 報告...');
     // 設定預設輸出路徑
@@ -247,6 +333,10 @@ export class ComponentUsageAnalyzer {
       // 添加元件標題和檔案路徑
       output += `## ${componentName}\n`;
       output += `> File Path: \`${data.file}\`\n\n`;
+
+      // 添加元件依賴關係圖
+      output += '### Dependency Tree\n\n';
+      output += this.generateMermaidFlowchart(new Set(), new Set(), { name: componentName, data });
 
       if (data.dependencies.length > 0) {
         // 根據 componentPaths 配置來分組依賴
@@ -330,76 +420,7 @@ export class ComponentUsageAnalyzer {
     const finalPath = outputPath || defaultPath;
     
     let output = `# ${this.name} Dependency Tree\n\n`;
-    output += '```mermaid\nflowchart TD\n';
-    output += '    %% 樣式定義\n';
-    output += '    classDef component fill:#f9f,stroke:#333,stroke-width:2px,color:#000,font-weight:bold\n';
-    output += '    classDef element fill:#bbf,stroke:#333,stroke-width:2px,color:#000,font-weight:bold\n';
-    output += '    classDef page fill:#bfb,stroke:#333,stroke-width:2px,color:#000,font-weight:bold\n';
-    output += '    classDef other fill:#fff,stroke:#333,stroke-width:1px,color:#000\n\n';
-
-    const processedNodes = new Set<string>();
-    const edges = new Set<string>();
-
-    Object.entries(this.targetUsage).forEach(([componentName, data]) => {
-      const sourceId = componentName.replace(/[^a-zA-Z0-9]/g, '_');
-      
-      if (!processedNodes.has(sourceId)) {
-        processedNodes.add(sourceId);
-        output += `    ${sourceId}["${componentName}"]\n`;
-        output += `    class ${sourceId} component\n`;
-      }
-
-      data.dependencies.forEach((dep) => {
-        dep.imports.forEach((importName) => {
-          const cleanImportName = importName.split(' as ')[0].trim();
-          // 避免自我引用
-          if (cleanImportName !== 'type' && cleanImportName !== componentName) {
-            const targetId = cleanImportName.replace(/[^a-zA-Z0-9]/g, '_');
-            const edgeKey = `${sourceId}-${targetId}`;
-
-            if (!edges.has(edgeKey)) {
-              edges.add(edgeKey);
-              
-              if (!processedNodes.has(targetId)) {
-                processedNodes.add(targetId);
-                output += `    ${targetId}["${cleanImportName}"]\n`;
-                
-                if (dep.path.includes('/components/')) {
-                  output += `    class ${targetId} component\n`;
-                } else if (dep.path.includes('/elements/')) {
-                  output += `    class ${targetId} element\n`;
-                } else {
-                  output += `    class ${targetId} other\n`;
-                }
-              }
-              
-              output += `    ${sourceId} --> ${targetId}\n`;
-            }
-          }
-        });
-      });
-
-      // 頁面節點處理
-      data.usedInPages.forEach((page: string) => {
-        const pageName = page.replace(/^src\/pages\//, '').replace(/\.tsx$/, '');
-        const pageNodeId = `page_${pageName.replace(/[^a-zA-Z0-9]/g, '_')}`;
-        
-        const edgeKey = `${sourceId}-${pageNodeId}`;
-        if (!edges.has(edgeKey)) {
-          edges.add(edgeKey);
-          
-          if (!processedNodes.has(pageNodeId)) {
-            processedNodes.add(pageNodeId);
-            output += `    ${pageNodeId}["${pageName}"]\n`;
-          }
-          
-          output += `    ${sourceId} --> ${pageNodeId}\n`;
-          output += `    class ${pageNodeId} page\n`;
-        }
-      });
-    });
-
-    output += '```\n';
+    output += this.generateMermaidFlowchart();
     
     fs.mkdirSync(path.dirname(finalPath), { recursive: true });
     fs.writeFileSync(finalPath, output, 'utf8');
