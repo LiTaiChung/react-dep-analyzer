@@ -320,9 +320,15 @@ export class ComponentUsageAnalyzer {
     data: ComponentUsage,
     outputDir: string
   ): string {
-    // 生成元件專屬的 Markdown 檔案路徑
-    const componentFileName = `${componentName.toLowerCase()}.md`;
-    const componentFilePath = path.join(outputDir, componentFileName);
+    // 從元件檔案路徑獲取目錄結構
+    const componentDir = path.dirname(data.file);
+    
+    // 在輸出目錄中創建相同的目錄結構
+    const targetDir = path.join(outputDir, componentDir);
+    
+    // 使用原始元件名稱（保持大小寫）作為檔案名
+    const componentFileName = `${componentName}.md`;
+    const componentFilePath = path.join(targetDir, componentFileName);
     
     // 生成元件文檔內容
     let output = `# ${componentName}\n`;
@@ -393,6 +399,9 @@ export class ComponentUsageAnalyzer {
       output += '\n';
     }
 
+    // 確保目標目錄存在
+    fs.mkdirSync(targetDir, { recursive: true });
+    
     // 寫入元件文檔檔案
     fs.writeFileSync(componentFilePath, output, 'utf8');
     return componentFilePath;

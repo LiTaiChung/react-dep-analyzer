@@ -163,14 +163,21 @@ const defaultConfig = {
 
 ### Markdown 文檔
 
-工具會在指定的輸出目錄中生成以下檔案結構：
+工具會在指定的輸出目錄中生成以下檔案結構，保持與原始元件相同的目錄結構：
 
 ```
 output-dir/
-  ├── index.md          # 元件索引
-  ├── button.md         # Button 元件文檔
-  ├── card.md          # Card 元件文檔
-  └── ...              # 其他元件文檔
+  ├── index.md                              # 元件索引
+  ├── src/
+  │   ├── components/
+  │   │   ├── Button/
+  │   │   │   └── Button.md                # Button 元件文檔
+  │   │   └── Card/
+  │   │       └── Card.md                  # Card 元件文檔
+  │   └── elements/
+  │       └── Icon/
+  │           └── Icon.md                  # Icon 元件文檔
+  └── ...
 ```
 
 #### 索引文件 (index.md)
@@ -179,18 +186,18 @@ output-dir/
 
 ## Components
 
-- [Button](./button.md)
+- [Button](./src/components/Button/Button.md)
   - Dependencies: 1
   - Used in Pages: 2
-- [Card](./card.md)
+- [Card](./src/components/Card/Card.md)
   - Dependencies: 1
   - Used in Pages: 1
 ```
 
-#### 元件文檔 (例如：button.md)
+#### 元件文檔 (例如：src/components/Button/Button.md)
 ```markdown
 # Button
-> File Path: `src/components/Button.tsx`
+> File Path: `src/components/Button/index.tsx`
 
 ## Dependency Tree
 ```mermaid
@@ -206,7 +213,7 @@ flowchart TD
 
 ## Elements Dependencies
 > - **@/elements/Icon**
->   - File: `src/elements/Icon.tsx`
+>   - File: `src/elements/Icon/index.tsx`
 >   - Imports: `Icon`
 
 ## Used in Pages
