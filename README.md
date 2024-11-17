@@ -1,26 +1,18 @@
-# 元件使用分析工具 (Component Usage Analyzer)
+# React Dependency Analyzer
 
-這是一個用於分析 React/TypeScript 專案中元件依賴關係和使用情況的工具。它可以幫助你：
-
-- 追蹤元件之間的依賴關係
-- 查找元件在哪些頁面中被使用
-- 生成依賴關係的 Markdown 報告
-- 生成可視化的依賴樹圖（使用 Mermaid）
+[![npm version](https://badge.fury.io/js/react-dep-analyzer.svg)](https://badge.fury.io/js/react-dep-analyzer)
+[![GitHub license](https://img.shields.io/github/license/LiTaiChung/react-dep-analyzer.svg)](https://github.com/LiTaiChung/react-dep-analyzer/blob/main/LICENSE)
 
 ## 安裝
 
 ```bash
-npm install component-usage-analyzer
+npm install react-dep-analyzer
 ```
 
 ## 基本使用
 
 ```typescript
-// ESM
-import { createAnalyzer } from 'component-usage-analyzer';
-
-// CommonJS
-const { createAnalyzer } = require('component-usage-analyzer');
+import { createAnalyzer } from 'react-dep-analyzer';
 
 // 使用預設配置建立分析器
 const analyzer = createAnalyzer();

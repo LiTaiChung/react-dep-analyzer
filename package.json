@@ -1,7 +1,7 @@
 {
-  "name": "component-usage-analyzer",
-  "version": "1.0.8",
-  "description": "分析 React 元件使用情況的工具",
+  "name": "react-dep-analyzer",
+  "version": "1.0.0",
+  "description": "分析 React 元件依賴關係和使用情況的工具",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -20,7 +20,7 @@
   "scripts": {
     "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
     "build": "tsup src/index.ts --format cjs,esm --dts --clean",
-    "test": "jest",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "lint": "eslint src --ext .ts,.tsx",
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "npm run typecheck && npm run build"
@@ -52,5 +52,13 @@
   "peerDependencies": {
     "react": ">=16.8.0",
     "typescript": ">=4.7.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LiTaiChung/react-dep-analyzer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/LiTaiChung/react-dep-analyzer/issues"
+  },
+  "homepage": "https://github.com/LiTaiChung/react-dep-analyzer#readme"
 }

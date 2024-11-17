@@ -1,4 +1,4 @@
-import { createAnalyzer } from '../src';
+import { createAnalyzer } from '../src/index.js';
 
 describe('ComponentUsageAnalyzer', () => {
   it('should create analyzer with default options', () => {

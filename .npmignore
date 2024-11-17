@@ -1,13 +1,16 @@
 # Source
 src/
 tests/
+examples/
 coverage/
 
 # Config files
 .github/
 .gitignore
 jest.config.js
+jest.config.ts
 tsconfig.json
+tsup.config.ts
 *.test.ts
 *.test.js
 
