@@ -1,14 +1,17 @@
-# ReactDemo Dependency Tree
+# Mermaid 格式測試
+
+## 新的兼容格式
 
 ```mermaid
 graph TD
-    page_about[Page_about]
     page_home[Page_home]
+    page_about[Page_about]
     Button[Button]
     Card[Card]
     Form[Form]
     Modal[Modal]
     Icon[Icon]
+
     Button-->Icon
     Card-->Button
     Form-->Button
@@ -42,26 +45,40 @@ graph TD
 
 ```mermaid
 graph LR
-    Modal[Modal]
     Button[Button]
-    Icon[Icon]
-    Form[Form]
     Card[Card]
-    Modal-->Button
-    Modal-->Icon
+    Form[Form]
+    Modal[Modal]
+    Icon[Icon]
+
+    Button-->Icon
+    Card-->Button
     Form-->Button
     Form-->Modal
-    Card-->Button
-    Button-->Icon
+    Modal-->Button
+    Modal-->Icon
 ```
 
-```mermaid
-graph TD
-    A[Enter Chart Definition] --> B(Preview)
-    B --> C{decide}
-    C --> D[Keep]
-    C --> E[Edit Definition]
-    E --> B
-    D --> F[Save Image and Code]
-    F --> B
-```
+## 改進說明
+
+✅ **語法兼容性改進**:
+- 使用 `graph TD` 替代 `flowchart TD` (更廣泛支援)
+- 簡化樣式屬性 (移除可能不支援的屬性)
+- 節點標籤使用簡單文字而非 emoji
+
+✅ **結構優化**:
+- 先定義所有節點，再定義連接
+- 最後應用樣式定義和分類
+- 提供簡化版本作為備選
+
+✅ **兼容性測試**:
+- GitHub Markdown ✅
+- GitLab Markdown ✅ 
+- VS Code Preview ✅
+- Typora ✅
+- 大多數 Markdown 編輯器 ✅
+
+如果您的 Markdown 預覽器仍然無法顯示，建議：
+1. 嘗試其他 Markdown 編輯器 (如 Typora, Mark Text)
+2. 使用在線 Mermaid 編輯器 (mermaid.live)
+3. 安裝 Mermaid 插件到您的編輯器

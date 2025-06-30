@@ -1,18 +1,18 @@
-# Card
+# Form
 
-> File Path: `src/components/Card/index.tsx`
+> File Path: `src/components/Form/index.tsx`
 
 ## Dependency Tree
 
 ```mermaid
 graph TD
-    page_about[Page_about]
     page_home[Page_home]
     Button[Button]
-    Card[Card]
-    Card-->Button
-    page_about-->Card
-    page_home-->Card
+    Form[Form]
+    Modal[Modal]
+    Form-->Button
+    Form-->Modal
+    page_home-->Form
 
     %% 樣式定義
     classDef component fill:#e1f5fe,stroke:#01579b,stroke-width:2px
@@ -22,8 +22,8 @@ graph TD
 
     %% 樣式應用
     class Button component
-    class Card component
-    class page_about page
+    class Form component
+    class Modal component
     class page_home page
 ```
 
@@ -31,17 +31,21 @@ graph TD
 
 ```mermaid
 graph LR
-    Card[Card]
+    Form[Form]
     Button[Button]
-    Card-->Button
+    Modal[Modal]
+    Form-->Button
+    Form-->Modal
 ```
 
 ## Components Dependencies
 > - **@/components/Button**
 >   - File: `src/components/Button.tsx`
 >   - Imports: `Button`
+> - **@/components/Modal**
+>   - File: `src/components/Modal.tsx`
+>   - Imports: `Modal`
 
 ## Used in Pages
 > - `src/pages/home.tsx`
-> - `src/pages/about.tsx`
 

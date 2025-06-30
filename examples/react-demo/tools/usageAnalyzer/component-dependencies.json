@@ -1,7 +1,60 @@
 {
-  "name": "Component",
-  "analyzedAt": "2024-11-17T19:04:50.349Z",
+  "name": "ReactDemo",
+  "analyzedAt": "2025-06-30T16:04:59.919Z",
   "components": [
+    {
+      "name": "Modal",
+      "file": "src/components/Modal/index.tsx",
+      "dependencies": {
+        "components": [
+          {
+            "path": "@/components/Button",
+            "file": "src/components/Button.tsx",
+            "imports": [
+              "Button"
+            ]
+          }
+        ],
+        "elements": [
+          {
+            "path": "@/elements/Icon",
+            "file": "src/elements/Icon.tsx",
+            "imports": [
+              "Icon"
+            ]
+          }
+        ]
+      },
+      "usedInPages": [
+        "src/pages/home.tsx"
+      ]
+    },
+    {
+      "name": "Form",
+      "file": "src/components/Form/index.tsx",
+      "dependencies": {
+        "components": [
+          {
+            "path": "@/components/Button",
+            "file": "src/components/Button.tsx",
+            "imports": [
+              "Button"
+            ]
+          },
+          {
+            "path": "@/components/Modal",
+            "file": "src/components/Modal.tsx",
+            "imports": [
+              "Modal"
+            ]
+          }
+        ],
+        "elements": []
+      },
+      "usedInPages": [
+        "src/pages/home.tsx"
+      ]
+    },
     {
       "name": "Card",
       "file": "src/components/Card/index.tsx",
@@ -18,7 +71,8 @@
         "elements": []
       },
       "usedInPages": [
-        "src/pages/home.tsx"
+        "src/pages/home.tsx",
+        "src/pages/about.tsx"
       ]
     },
     {
